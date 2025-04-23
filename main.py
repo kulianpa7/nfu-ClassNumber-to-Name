@@ -94,11 +94,10 @@ session.headers.update({
     "sec-ch-ua-platform": '"Windows"'
 })
 for i in range(1, 61):
+    #example
     data = {
         "std": f"412481{i:02d}"
     }
-    # 41043257
-    # 41043108
     response = session.post(url, data=data, verify=False)
     response_data=[]
     try:

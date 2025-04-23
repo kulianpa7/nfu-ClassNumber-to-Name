@@ -17,7 +17,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def preprocess_image(image):
-    """ 使用 OpenCV 進行影像前處理，提高 OCR 辨識率 """
     image = np.array(image)  # 轉成 OpenCV 格式
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 轉為灰階
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)  # 降噪
@@ -45,7 +44,7 @@ def download_and_parse_captcha(session, url, save_path):
 
 captcha_url = "https://ecare.nfu.edu.tw/ext/authimg?rnd=0.30101149229578916"
 save_directory = "captchas"
-os.makedirs(save_directory, exist_ok=True)  # 確保資料夾存在
+os.makedirs(save_directory, exist_ok=True) 
 save_path = os.path.join(save_directory, "processed_captcha.png")
 soup = None
 while soup is None:
@@ -105,17 +104,4 @@ for i in range(1, 61):
     except json.decoder.JSONDecodeError:
         print(f"Student ID: {data['std']} is invalid")
     print(response_data)
-    if len(response_data) > 0:
-        continue
-    # Print the data in a readable format
-    for student in response_data:
-        print("-" * 30)
-        print(f"Student Number: {student['STUD_NO']}")
-        print(f"Name: {student['STUD_CNAME']}")
-        print(f"Sex: {'Male' if student['STUD_SEX'] == '1' else 'Female'}")
-        print(f"Class Number: {student['CLSS_NO']}")
-        print(f"Color Number: {student['STUD_COLO_NO']}")
-        print(f"Class Name: {student['CLSS_SNAME']}")
-        print("-" * 30)
-
 session.get("https://ecare.nfu.edu.tw/login/authout?out=1", verify=False)

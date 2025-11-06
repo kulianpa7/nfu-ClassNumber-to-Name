@@ -8,6 +8,7 @@ import urllib3
 import os
 import base64
 from bs4 import BeautifulSoup
+import time
 
 # 轉換 Base64 為原始字串
 def from_base64(b64_text):
@@ -48,25 +49,44 @@ os.makedirs(save_directory, exist_ok=True)
 save_path = os.path.join(save_directory, "processed_captcha.png")
 soup = None
 while soup is None:
+    # 先載入登入頁抓取 _token
+    login_page = session.get("https://ecare.nfu.edu.tw", verify=False)
+    soup_page = BeautifulSoup(login_page.text, "html.parser")
+    token = soup_page.find("input", {"name": "_token"})["value"]
+    print("抓到的 _token:", token)
+
+    # 下載與辨識 captcha
     parsed_text = download_and_parse_captcha(session, captcha_url, save_path)
     print("圖片已儲存至:", save_path)
     print("解析出的文字:", parsed_text)
-    data = {
-        "login_acc": "username_base64",
-        "login_pwd": "password_base64",
-    }
-    # 將字典內的每個值解碼回原始字串
-    data = {key: base64.b64decode(value).decode("utf-8") for key, value in data.items()}
-    data["login_chksum"] = parsed_text
-    url = "https://ecare.nfu.edu.tw/login/auth"
-    response = session.post(url, data=data, verify=False)
 
-    print("response:", response)
-    print("Response data:")
-    print(response.text)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    soup = soup.find(class_="bt_logout")
-    
+    # 準備登入資料
+    data = {
+        "login_acc": base64.b64decode("YOURBASE64_STUDENT_NUMBER").decode(),
+        "login_pwd": base64.b64decode("YOURBASE64_STUDENT_PASSWORD").decode(),
+        "login_chksum": parsed_text,
+        "_token": token
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Referer": "https://ecare.nfu.edu.tw/login",
+        "Origin": "https://ecare.nfu.edu.tw"
+    }
+
+    response = session.post("https://ecare.nfu.edu.tw/login/auth", data=data, headers=headers, verify=False)
+    print("Status:", response.status_code)
+
+    # 判斷是否登入成功
+    soup = BeautifulSoup(response.text, "html.parser").find(class_="bt_logout")
+    if soup:
+        print("✅ 登入成功！")
+        break
+    else:
+        print("登入失敗，重試中...")
+        time.sleep(1)
+
+
 for key, value in response.headers.items():
     print(f"{key}: {value}")
 print("解析出的文字:", parsed_text)
@@ -95,7 +115,7 @@ session.headers.update({
 for i in range(1, 61):
     #example
     data = {
-        "std": f"412481{i:02d}"
+        "std": f"510151{i:02d}"
     }
     response = session.post(url, data=data, verify=False)
     response_data=[]
